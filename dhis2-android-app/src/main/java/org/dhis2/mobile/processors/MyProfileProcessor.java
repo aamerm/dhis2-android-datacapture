@@ -36,12 +36,15 @@ import android.support.v4.content.LocalBroadcastManager;
 import org.dhis2.mobile.io.handlers.UserAccountHandler;
 import org.dhis2.mobile.io.models.Field;
 import org.dhis2.mobile.network.HTTPClient;
+import org.dhis2.mobile.network.NetworkUtils;
 import org.dhis2.mobile.network.Response;
 import org.dhis2.mobile.network.URLConstants;
 import org.dhis2.mobile.ui.fragments.MyProfileFragment;
 import org.dhis2.mobile.utils.PrefUtils;
 import org.dhis2.mobile.utils.TextFileUtils;
 
+import java.net.HttpURLConnection;
+import java.net.URLConnection;
 import java.util.ArrayList;
 
 public class MyProfileProcessor {
@@ -56,21 +59,30 @@ public class MyProfileProcessor {
 
         String accountInfo = UserAccountHandler.fromFields(fields);
         TextFileUtils.writeTextFile(context, TextFileUtils.Directory.ROOT, TextFileUtils.FileNames.ACCOUNT_INFO, accountInfo);
+        Intent intent = new Intent(MyProfileFragment.ON_UPLOAD_FINISHED_LISTENER_TAG);
 
-        String url = PrefUtils.getServerURL(context) + URLConstants.API_USER_ACCOUNT_URL;
-        String creds = PrefUtils.getCredentials(context);
-        Response response = HTTPClient.post(url, creds, accountInfo);
-
-        if (HTTPClient.isError(response.getCode())) {
+        if(!NetworkUtils.checkConnection(context))
+        {
             PrefUtils.setAccountUpdateFlag(context, true);
+            intent.putExtra(Response.CODE, HttpURLConnection.HTTP_UNAVAILABLE);
+        }
+        else
+        {
+            String url = PrefUtils.getServerURL(context) + URLConstants.API_USER_ACCOUNT_URL;
+            String creds = PrefUtils.getCredentials(context);
+            Response response = HTTPClient.post(url, creds, accountInfo);
+            if (HTTPClient.isError(response.getCode())) {
+                PrefUtils.setAccountUpdateFlag(context, true);
+            }
+            intent.putExtra(Response.CODE, response.getCode());
+
         }
 
         PrefUtils.setResourceState(context,
                 PrefUtils.Resources.PROFILE_DETAILS,
                 PrefUtils.State.UP_TO_DATE);
 
-        Intent intent = new Intent(MyProfileFragment.ON_UPLOAD_FINISHED_LISTENER_TAG);
-        intent.putExtra(Response.CODE, response.getCode());
+
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 
