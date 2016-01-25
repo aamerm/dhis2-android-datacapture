@@ -30,6 +30,7 @@
 package org.dhis2.mobile.ui.adapters.dataEntry.rows;
 
 import android.content.Context;
+import android.text.Editable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -46,6 +47,7 @@ import org.dhis2.mobile.io.models.OptionSet;
 import org.dhis2.mobile.ui.adapters.dataEntry.AutoCompleteAdapter;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class AutoCompleteRow implements Row {
@@ -85,7 +87,12 @@ public class AutoCompleteRow implements Row {
                     rootView.findViewById(R.id.chooseOption);
             OnFocusListener onFocusChangeListener = new OnFocusListener(autoComplete,
                     adapter.getData());
-            EditTextWatcher textWatcher = new EditTextWatcher(field);
+            EditTextWatcher textWatcher = new EditTextWatcher(field){
+                @Override
+                public void afterTextChanged(Editable arg) {
+                    field.setValue(getSelectedOptionCode(arg.toString()));
+                }
+            };
 
             autoComplete.setOnFocusChangeListener(onFocusChangeListener);
             autoComplete.addTextChangedListener(textWatcher);
@@ -111,13 +118,24 @@ public class AutoCompleteRow implements Row {
         holder.autoComplete.setOnFocusChangeListener(holder.onFocusListener);
         holder.textWatcher.setField(field);
         holder.autoComplete.addTextChangedListener(holder.textWatcher);
-        holder.autoComplete.setText(field.getValue());
+        holder.autoComplete.setText(getSelectedOption(field.getValue()));
 
         holder.listener.setAutoComplete(holder.autoComplete);
         holder.button.setOnClickListener(holder.listener);
         holder.autoComplete.clearFocus();
 
         return view;
+    }
+
+    private String getSelectedOption(String value) {
+        ArrayList list = optionset.getOptions();
+        Iterator iterator = list.iterator();
+        while(iterator.hasNext()){
+         Option option = (Option) iterator.next();
+            if(value.equals(option.getCode()))
+                return option.getName();
+        }
+        return "";
     }
 
     @Override
@@ -185,7 +203,22 @@ public class AutoCompleteRow implements Row {
                 if (!options.contains(choice)) {
                     autoComplete.setText(Field.EMPTY_FIELD);
                 }
+                else{
+                    field.setValue(getSelectedOptionCode(choice));
+                }
             }
         }
+    }
+
+    private String getSelectedOptionCode(String value) {
+
+        ArrayList list = optionset.getOptions();
+        Iterator iterator = list.iterator();
+        while(iterator.hasNext()){
+            Option option = (Option) iterator.next();
+            if(value.equals(option.getName()))
+                return option.getCode();
+        }
+        return "";
     }
 }
