@@ -82,7 +82,6 @@ public class LoginActivity extends ActionBarActivity {
             // If response code is 200, then MenuActivity is started
             // If not, user is notified with error message
             if (!HTTPClient.isError(code)) {
-                showMessage("Yippie");
                 Intent menuActivity = new Intent(LoginActivity.this, MenuActivity.class);
                 startActivity(menuActivity);
                 overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
