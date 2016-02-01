@@ -29,6 +29,7 @@
 
 package org.dhis2.mobile.ui.activities;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -176,7 +177,12 @@ public class MenuActivity extends BaseActivity {
 
         final NavigationMenuItem menuItem = mMenuItems.get(position);
         if (menuItem == NavigationMenuItem.LOG_OUT) {
-            logOut();
+            new ConfirmDialogFragment(getString(R.string.logout_title), getString(R.string.message), getString(R.string.logout_option), getString(R.string.cancel_option), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    logOut();
+                }
+            }).show(this.getFragmentManager(), getString(R.string.logout_title));
             return;
         }
 
